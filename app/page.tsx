@@ -12,8 +12,14 @@ const HeatMap = dynamic(() => import('./components/HeatMap'), {
 });
 
 export default function Page() {
-  const [threshold, setThreshold] = useState(0);
+  const [thresholds, setThresholds] = useState({ absolute: 0, anomaly: 0 });
+  const [mode, setMode] = useState<'absolute' | 'anomaly'>('absolute');
   const [mapInstance, setMapInstance] = useState<Map | null>(null);
+
+  const currentThreshold = thresholds[mode];
+  const setCurrentThreshold = useCallback((val: number) => {
+    setThresholds(prev => ({ ...prev, [mode]: val }));
+  }, [mode]);
 
   const handleMapLoad = useCallback((map: Map) => {
     setMapInstance(map);
@@ -34,10 +40,12 @@ export default function Page() {
 
   return (
     <main className="relative w-full h-full bg-black">
-      <HeatMap threshold={threshold} onMapLoad={handleMapLoad} />
+      <HeatMap threshold={currentThreshold} mode={mode} onMapLoad={handleMapLoad} />
       <UIOverlay 
-        threshold={threshold} 
-        setThreshold={setThreshold} 
+        threshold={currentThreshold} 
+        setThreshold={setCurrentThreshold} 
+        mode={mode}
+        setMode={setMode}
         onLocationSelect={handleLocationSelect} 
       />
     </main>

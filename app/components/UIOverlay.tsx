@@ -6,6 +6,8 @@ import { Search, MapPin, Thermometer } from 'lucide-react';
 interface UIOverlayProps {
   threshold: number;
   setThreshold: (val: number) => void;
+  mode: 'absolute' | 'anomaly';
+  setMode: (mode: 'absolute' | 'anomaly') => void;
   onLocationSelect: (loc: { center: [number, number]; name: string }) => void;
 }
 
@@ -16,7 +18,7 @@ const FEATURED_LOCATIONS = [
   { name: 'Paris', center: [2.3522, 48.8566] as [number, number] },
 ];
 
-export default function UIOverlay({ threshold, setThreshold, onLocationSelect }: UIOverlayProps) {
+export default function UIOverlay({ threshold, setThreshold, mode, setMode, onLocationSelect }: UIOverlayProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
@@ -89,7 +91,7 @@ export default function UIOverlay({ threshold, setThreshold, onLocationSelect }:
            */}
            <div 
              className="absolute top-0 left-0 right-0 bg-black/60 transition-all duration-75 pointer-events-none"
-             style={{ height: `${100 - threshold}%` }} 
+             style={{ height: `${100 - (threshold / (mode === 'anomaly' ? 20 : 100)) * 100}%` }} 
            />
 
            {/* 
@@ -100,7 +102,7 @@ export default function UIOverlay({ threshold, setThreshold, onLocationSelect }:
            <input
              type="range"
              min="0"
-             max="100"
+             max={mode === 'anomaly' ? 20 : 100}
              value={threshold}
              onChange={(e) => setThreshold(Number(e.target.value))}
              className="absolute w-[250px] h-8 opacity-0 cursor-pointer z-10"
@@ -117,6 +119,30 @@ export default function UIOverlay({ threshold, setThreshold, onLocationSelect }:
       <div className="absolute bottom-6 left-4 right-4 z-20">
         <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex flex-col gap-4">
           
+          {/* Mode Tabs */}
+          <div className="flex p-1 bg-black/40 rounded-xl">
+            <button
+              onClick={() => setMode('absolute')}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                mode === 'absolute' 
+                  ? 'bg-white/10 text-white shadow-sm' 
+                  : 'text-gray-400 hover:text-white/80'
+              }`}
+            >
+              Absolute Temp
+            </button>
+            <button
+              onClick={() => setMode('anomaly')}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                mode === 'anomaly' 
+                  ? 'bg-white/10 text-white shadow-sm' 
+                  : 'text-gray-400 hover:text-white/80'
+              }`}
+            >
+              Heat Island
+            </button>
+          </div>
+
           {/* Search Bar */}
           <div className="relative">
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 ${isSearching ? 'animate-pulse text-red-400' : ''}`} />
