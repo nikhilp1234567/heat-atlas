@@ -75,6 +75,27 @@ gdal_translate \
     -q
 
 # ==============================================================================
+# 2b. GENERATE CITY MASK
+# ==============================================================================
+CITY_MASK="city_mask_1440x720.tif"
+
+echo "🔹 Step 2b: Rasterizing city mask..."
+
+# -burn 1        : Sets city pixels to 1
+# -init 0        : Sets background to 0
+# -ts 1440 720   : Forces exact output size to match your input
+# -te -180 -90 180 90 : Forces global extent
+gdal_rasterize \
+    -burn 1 \
+    -ot Byte \
+    -ts 1440 720 \
+    -te -180 -90 180 90 \
+    -init 0 \
+    -l ne_10m_urban_areas \
+    "ne_10m_urban_areas.shp" \
+    "$CITY_MASK" \
+    -q
+# ==============================================================================
 # 3. CALCULATE ANOMALY
 # ==============================================================================
 # Logic: Real Temp (A) - Regional Avg (B) = Anomaly
@@ -97,9 +118,11 @@ gdal_calc.py \
 # We convert to Int16 to save space.
 echo "🔹 Step 4/5: Quantizing anomalies (Rounding)..."
 
+# In Step 4 (Quantize & Filter)
 gdal_calc.py \
     -A "$DELTA_TIFF" \
-    --calc="numpy.where(A > 1, round(A), 0)" \
+    -B "$CITY_MASK" \
+    --calc="numpy.where((A > 1) * (B == 1), round(A), 0)" \
     --outfile="$QUANTIZED_TIFF" \
     --NoDataValue=0 \
     --type=Int16 \
