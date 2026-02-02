@@ -8,7 +8,7 @@ set -o pipefail
 # Switch to the directory where this script is located
 cd "$(dirname "$0")"
 
-INPUT_FILE="./MOD_LSTD_M_2025-12-01_rgb_1440x720.FLOAT.TIFF"
+INPUT_FILE="MOD_LSTD_M_2025-12-01_rgb_3600x1800.FLOAT.TIFF"
 OUTPUT_PMTILES="planet_heat.pmtiles"
 TEMP_TIFF="temp_quantized.tif"
 LAYER_NAME="heat_layer"

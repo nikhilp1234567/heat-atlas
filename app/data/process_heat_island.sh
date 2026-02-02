@@ -7,7 +7,7 @@ set -o pipefail
 # ==============================================================================
 cd "$(dirname "$0")"
 
-INPUT_FILE="MOD_LSTD_M_2025-12-01_rgb_1440x720.FLOAT.TIFF"
+INPUT_FILE="MOD_LSTD_M_2025-12-01_rgb_3600x1800.FLOAT.TIFF"
 OUTPUT_PMTILES="planet_uhi_anomaly.pmtiles"
 CLEAN_INPUT="temp_clean.tif"       # Input with oceans removed
 REGIONAL_REF="temp_regional_blur.tif"
@@ -88,7 +88,7 @@ echo "🔹 Step 2b: Rasterizing city mask..."
 gdal_rasterize \
     -burn 1 \
     -ot Byte \
-    -ts 1440 720 \
+    -ts 3600 1800 \
     -te -180 -90 180 90 \
     -init 0 \
     -l ne_10m_urban_areas \

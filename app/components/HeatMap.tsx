@@ -47,7 +47,7 @@ export default function HeatMap({ threshold, mode, selectedLocation, onMapLoad }
       if (onMapLoad && map.current) onMapLoad(map.current);
 
       // --- ABSOLUTE TEMP SOURCE ---
-      const PMTILES_URL = 'https://b2xyufgbf31bjxw5.public.blob.vercel-storage.com/planet_heat.pmtiles'; 
+      const PMTILES_URL = 'https://b2xyufgbf31bjxw5.public.blob.vercel-storage.com/planet_heat.pmtiles?v=1.1'; 
 
       map.current!.addSource('heat-source', {
         type: 'vector',
@@ -100,7 +100,8 @@ export default function HeatMap({ threshold, mode, selectedLocation, onMapLoad }
       });
 
       // --- ANOMALY SOURCE ---
-      const ANOMALY_URL = 'https://b2xyufgbf31bjxw5.public.blob.vercel-storage.com/planet_uhi_anomaly.pmtiles';
+      // Added cache buster to force load of new city-masked data
+      const ANOMALY_URL = 'https://b2xyufgbf31bjxw5.public.blob.vercel-storage.com/planet_uhi_anomaly.pmtiles?v=1.1';
 
       map.current!.addSource('anomaly-source', {
         type: 'vector',
