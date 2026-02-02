@@ -15,6 +15,7 @@ export default function Page() {
   const [thresholds, setThresholds] = useState({ absolute: 0, anomaly: 0 });
   const [mode, setMode] = useState<'absolute' | 'anomaly'>('absolute');
   const [mapInstance, setMapInstance] = useState<Map | null>(null);
+  const [activeLocation, setActiveLocation] = useState<{ center: [number, number]; name: string } | null>(null);
 
   const currentThreshold = thresholds[mode];
   const setCurrentThreshold = useCallback((val: number) => {
@@ -28,6 +29,8 @@ export default function Page() {
   const handleLocationSelect = useCallback((loc: { center: [number, number]; name: string }) => {
     if (!mapInstance) return;
 
+    setActiveLocation(loc); // Set active location for tooltip
+
     mapInstance.flyTo({
       center: loc.center,
       zoom: 12,
@@ -40,7 +43,12 @@ export default function Page() {
 
   return (
     <main className="relative w-full h-full bg-black">
-      <HeatMap threshold={currentThreshold} mode={mode} onMapLoad={handleMapLoad} />
+      <HeatMap 
+        threshold={currentThreshold} 
+        mode={mode} 
+        selectedLocation={activeLocation}
+        onMapLoad={handleMapLoad} 
+      />
       <UIOverlay 
         threshold={currentThreshold} 
         setThreshold={setCurrentThreshold} 

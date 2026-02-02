@@ -8,13 +8,15 @@ import { Protocol } from 'pmtiles';
 interface HeatMapProps {
   threshold: number;
   mode: 'absolute' | 'anomaly';
+  selectedLocation?: { center: [number, number]; name: string } | null;
   onMapLoad?: (map: maplibregl.Map) => void;
 }
 
-export default function HeatMap({ threshold, mode, onMapLoad }: HeatMapProps) {
+export default function HeatMap({ threshold, mode, selectedLocation, onMapLoad }: HeatMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const popupRef = useRef<maplibregl.Popup | null>(null);
 
   useEffect(() => {
     if (map.current) return;
@@ -30,6 +32,14 @@ export default function HeatMap({ threshold, mode, onMapLoad }: HeatMapProps) {
       zoom: 11,
       pitch: 0,
       bearing: 0
+    });
+
+    // Initialize Popup
+    popupRef.current = new maplibregl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      className: 'custom-popup',
+      maxWidth: '300px'
     });
 
     map.current.on('load', () => {
@@ -99,14 +109,12 @@ export default function HeatMap({ threshold, mode, onMapLoad }: HeatMapProps) {
       });
 
       // Anomaly Layers
-      // Assuming 'temp' or similar property exists. 
-      // Using a 0-12 scale for Heat Island Effect (degrees delta).
       map.current!.addLayer({
         id: 'anomaly-fill',
         type: 'fill',
         source: 'anomaly-source',
         'source-layer': 'heat_island_layer', 
-        layout: { visibility: 'none' }, // Hidden by default
+        layout: { visibility: 'visible' },
         paint: {
           'fill-color': [
             'interpolate',
@@ -119,7 +127,7 @@ export default function HeatMap({ threshold, mode, onMapLoad }: HeatMapProps) {
             8, '#ef4444',   // Red
             12, '#b91c1c'   // Deep Red
           ],
-          'fill-opacity': 0.6
+          'fill-opacity': 0 // Hidden by default (via opacity)
         }
       });
 
@@ -128,7 +136,7 @@ export default function HeatMap({ threshold, mode, onMapLoad }: HeatMapProps) {
         type: 'line',
         source: 'anomaly-source',
         'source-layer': 'heat_island_layer',
-        layout: { visibility: 'none' },
+        layout: { visibility: 'visible' },
         paint: {
           'line-color': [
             'interpolate',
@@ -140,7 +148,7 @@ export default function HeatMap({ threshold, mode, onMapLoad }: HeatMapProps) {
             12, '#dc2626'
           ],
           'line-width': 1,
-          'line-opacity': 0.8
+          'line-opacity': 0 // Hidden by default
         }
       });
 
@@ -148,18 +156,22 @@ export default function HeatMap({ threshold, mode, onMapLoad }: HeatMapProps) {
 
   }, [onMapLoad]);
 
-  // Handle Mode Switching
+  // Handle Mode Switching using Opacity
   useEffect(() => {
     if (!loaded || !map.current) return;
     
-    const absoluteVisibility = mode === 'absolute' ? 'visible' : 'none';
-    const anomalyVisibility = mode === 'anomaly' ? 'visible' : 'none';
-
-    if (map.current.getLayer('heat-fill')) map.current.setLayoutProperty('heat-fill', 'visibility', absoluteVisibility);
-    if (map.current.getLayer('heat-line')) map.current.setLayoutProperty('heat-line', 'visibility', absoluteVisibility);
+    // We use opacity instead of visibility so we can query "hidden" layers for data
+    const heatOpacity = mode === 'absolute' ? 0.6 : 0;
+    const heatLineOpacity = mode === 'absolute' ? 0.8 : 0;
     
-    if (map.current.getLayer('anomaly-fill')) map.current.setLayoutProperty('anomaly-fill', 'visibility', anomalyVisibility);
-    if (map.current.getLayer('anomaly-line')) map.current.setLayoutProperty('anomaly-line', 'visibility', anomalyVisibility);
+    const anomalyOpacity = mode === 'anomaly' ? 0.6 : 0;
+    const anomalyLineOpacity = mode === 'anomaly' ? 0.8 : 0;
+
+    if (map.current.getLayer('heat-fill')) map.current.setPaintProperty('heat-fill', 'fill-opacity', heatOpacity);
+    if (map.current.getLayer('heat-line')) map.current.setPaintProperty('heat-line', 'line-opacity', heatLineOpacity);
+    
+    if (map.current.getLayer('anomaly-fill')) map.current.setPaintProperty('anomaly-fill', 'fill-opacity', anomalyOpacity);
+    if (map.current.getLayer('anomaly-line')) map.current.setPaintProperty('anomaly-line', 'line-opacity', anomalyLineOpacity);
 
   }, [mode, loaded]);
 
@@ -170,7 +182,6 @@ export default function HeatMap({ threshold, mode, onMapLoad }: HeatMapProps) {
     const filterHeat: maplibregl.FilterSpecification = ['>=', ['get', 'temp'], threshold];
     const filterAnomaly: maplibregl.FilterSpecification = ['>=', ['get', 'anomaly'], threshold];
     
-    // Apply filter to all layers (hidden ones won't show anyway, but state should be consistent)
     if (map.current.getLayer('heat-fill')) map.current.setFilter('heat-fill', filterHeat);
     if (map.current.getLayer('heat-line')) map.current.setFilter('heat-line', filterHeat);
     
@@ -178,6 +189,101 @@ export default function HeatMap({ threshold, mode, onMapLoad }: HeatMapProps) {
     if (map.current.getLayer('anomaly-line')) map.current.setFilter('anomaly-line', filterAnomaly);
 
   }, [threshold, loaded]);
+
+  // Show Popup Logic
+  const showPopup = (lngLat: maplibregl.LngLatLike) => {
+    if (!map.current || !popupRef.current) return;
+
+    const point = map.current.project(lngLat);
+    const features = map.current.queryRenderedFeatures(point, {
+      layers: ['heat-fill', 'anomaly-fill']
+    });
+
+    if (!features.length) {
+      popupRef.current.remove();
+      return;
+    }
+
+    const heatFeature = features.find(f => f.layer.id === 'heat-fill');
+    const anomalyFeature = features.find(f => f.layer.id === 'anomaly-fill');
+
+    const temp = heatFeature?.properties?.temp;
+    const anomaly = anomalyFeature?.properties?.anomaly;
+
+    let html = '';
+    
+    // Formatting helper
+    const fmt = (n: number) => Math.round(n);
+
+    if (mode === 'absolute') {
+       if (temp !== undefined) {
+         html = `
+           <div class="flex flex-col gap-1 min-w-[100px]">
+             <span class="text-xs uppercase tracking-wider text-gray-500 font-bold">Temperature</span>
+             <span class="text-2xl font-bold text-gray-900">${fmt(temp)}°C</span>
+           </div>
+         `;
+       }
+    } else {
+       // Anomaly Mode
+       if (anomaly !== undefined) {
+          const tempDisplay = temp !== undefined 
+            ? `<div class="pt-2 mt-2 border-t border-gray-200 flex justify-between items-center">
+                 <span class="text-xs text-gray-500">Abs. Temp</span>
+                 <span class="text-sm font-semibold text-gray-700">${fmt(temp)}°C</span>
+               </div>` 
+            : '';
+          
+          html = `
+             <div class="flex flex-col gap-1 min-w-[120px]">
+               <span class="text-xs uppercase tracking-wider text-gray-500 font-bold">Heat Island</span>
+               <span class="text-2xl font-bold text-red-600">+${fmt(anomaly)}°C</span>
+               ${tempDisplay}
+             </div>
+          `;
+       }
+    }
+
+    if (html) {
+      popupRef.current
+        .setLngLat(lngLat)
+        .setHTML(html)
+        .addTo(map.current);
+    } else {
+      popupRef.current.remove();
+    }
+  };
+
+  // Click Listener
+  useEffect(() => {
+    if (!loaded || !map.current) return;
+
+    const onClick = (e: maplibregl.MapMouseEvent) => {
+      showPopup(e.lngLat);
+    };
+
+    map.current.on('click', onClick);
+    return () => {
+      if (map.current) map.current.off('click', onClick);
+    };
+  }, [loaded, mode]); // Re-bind when mode changes to update popup content logic
+
+  // Handle Search Selection (Auto-Popup)
+  useEffect(() => {
+    if (!loaded || !map.current || !selectedLocation) return;
+
+    const onMoveEnd = () => {
+      // Once map finishes flying, try to show popup at the center
+      showPopup(selectedLocation.center);
+    };
+
+    map.current.once('moveend', onMoveEnd);
+
+    // Cleanup: if component unmounts or location changes before moveend, remove listener
+    return () => {
+      if (map.current) map.current.off('moveend', onMoveEnd);
+    };
+  }, [selectedLocation, loaded]);
 
   return (
     <div ref={mapContainer} className="map-container" />
