@@ -13,8 +13,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Thermal Scanner",
-  description: "Urban Heat Island Visualizer",
+  title: "Heat Atlas | Urban Heat Island Visualizer",
+  description: "Explore urban heat islands and absolute temperatures globally with the Heat Atlas. Visualize climate data and thermal anomalies in real-time.",
+  keywords: ["heat atlas", "urban heat island", "climate change", "thermal map", "temperature", "global warming", "satellite data"],
+  authors: [{ name: "Nikhil Parmar", url: "https://nikhilp.online" }],
+  metadataBase: new URL("https://nikhilp.online/heat-atlas"),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Heat Atlas | Urban Heat Island Visualizer",
+    description: "Explore urban heat islands and absolute temperatures globally with the Heat Atlas.",
+    url: "https://nikhilp.online/heat-atlas",
+    siteName: "Heat Atlas",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Heat Atlas",
+    description: "Visualize global thermal anomalies.",
+    creator: "@nikhilparmar", // Assuming handle, or remove if unknown
+  },
+  icons: {
+    icon: "/heat-atlas/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {

@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="heat-gradient" x1="0" y1="512" x2="512" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="0.5" stop-color="#eab308"/>
+      <stop offset="1" stop-color="#ef4444"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="url(#heat-gradient)"/>
+  <path d="M256 0C256 0 256 512 256 512" stroke="white" stroke-opacity="0.2" stroke-width="24"/>
+  <path d="M0 256C0 256 512 256 512 256" stroke="white" stroke-opacity="0.2" stroke-width="24"/>
+  <circle cx="256" cy="256" r="230" stroke="white" stroke-opacity="0.1" stroke-width="12" fill="none"/>
+  <path d="M85 150 C 150 100, 360 100, 427 150" stroke="white" stroke-opacity="0.2" stroke-width="16" fill="none"/>
+  <path d="M85 362 C 150 412, 360 412, 427 362" stroke="white" stroke-opacity="0.2" stroke-width="16" fill="none"/>
+</svg>
