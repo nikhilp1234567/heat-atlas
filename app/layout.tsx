@@ -35,9 +35,6 @@ export const metadata: Metadata = {
     description: "Visualize global thermal anomalies.",
     creator: "@scientificsaas", // Assuming handle, or remove if unknown
   },
-  icons: {
-    icon: "/heat-atlas/icon.svg",
-  },
 };
 
 export const viewport: Viewport = {
