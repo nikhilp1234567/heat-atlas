@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   description: "Explore urban heat islands and absolute temperatures globally with the Heat Atlas. Visualize climate data and thermal anomalies in real-time.",
   keywords: ["heat atlas", "urban heat island", "climate change", "thermal map", "temperature", "global warming", "satellite data"],
   authors: [{ name: "Nikhil Parmar", url: "https://www.nikhilp.online" }],
-  metadataBase: new URL("https://www.nikhilp.online/heat-atlas"),
+  metadataBase: new URL("https://www.nikhilp.online"),
   alternates: {
-    canonical: "/",
+    canonical: "/heat-atlas",
   },
   openGraph: {
     title: "Heat Atlas | Urban Heat Island Visualizer",
